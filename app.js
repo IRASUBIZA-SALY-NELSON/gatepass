@@ -9,6 +9,9 @@ import swaggerUi from 'swagger-ui-express';
 import authRoutes from './routes/authRoutes.js';
 import usersRoutes from './routes/usersRoutes.js';
 import schoolRoutes from './routes/schoolRoutes.js';
+import parentRoutes from './routes/parentRoutes.js';
+import gateRoutes from './routes/gateRoutes.js';
+import paymentRoutes from './routes/paymentRoutes.js';
 import { notFound, errorHandler } from './middlewares/errorHandler.js';
 import swaggerSpec from './docs/swagger.js';
 
@@ -47,6 +50,9 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, { explorer: f
 app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/schools', schoolRoutes);
+app.use('/api/parents', parentRoutes);
+app.use('/api/gate', gateRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // 404 and error handler
 app.use(notFound);

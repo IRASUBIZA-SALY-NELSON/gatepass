@@ -35,6 +35,22 @@ const userSchema = new Schema(
             minlength: [8, 'Password must be at least 8 characters'],
             select: false,
         },
+        address: {
+            type: String,
+            default: '',
+        },
+        profileImage: {
+            type: String,
+            default: '',
+        },
+        isActive: {
+            type: Boolean,
+            default: true,
+        },
+        lastLogin: {
+            type: Date,
+            default: null,
+        },
         schoolId: {
             type: Schema.Types.ObjectId,
             ref: 'schools',
@@ -51,6 +67,14 @@ const userSchema = new Schema(
                 },
                 message: 'linkedStudents must be an array of strings for parent users only',
             },
+        },
+        preferences: {
+            notifications: {
+                email: { type: Boolean, default: true },
+                sms: { type: Boolean, default: true },
+                push: { type: Boolean, default: true },
+            },
+            language: { type: String, default: 'en' },
         },
     },
     { timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' } }
