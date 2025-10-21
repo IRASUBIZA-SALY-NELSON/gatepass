@@ -1,206 +1,92 @@
-// swagger.js
-import swaggerJSDoc from 'swagger-jsdoc';
-import swaggerUi from 'swagger-ui-express'; // optional helper for Express
-// If using CommonJS, use: const swaggerJSDoc = require('swagger-jsdoc');
-
-const options = {
-    definition: {
-        openapi: '3.0.3',
-        info: {
-            title: 'GatePass Auth API',
-            version: '1.0.0',
-            description: 'Authentication and authorization API for GatePass',
-        },
-        servers: [{ url: 'http://localhost:5000', description: 'Local dev' }],
-        components: {
-            securitySchemes: {
-                bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
-            },
-            schemas: {
-                User: {
-                    type: 'object',
-                    properties: {
-                        _id: { type: 'string' },
-                        userType: { type: 'string', enum: ['parent', 'school_admin', 'security', 'system_admin'] },
-                        name: { type: 'string' },
-                        email: { type: 'string', format: 'email' },
-                        phone: { type: 'string' },
-                        schoolId: { type: 'string', nullable: true },
-                        linkedStudents: { type: 'array', items: { type: 'string' } },
-                        createdAt: { type: 'string', format: 'date-time' },
-                    },
-                },
-                RegisterRequest: {
-                    type: 'object',
-                    required: ['userType', 'name', 'email', 'phone', 'password'],
-                    properties: {
-                        userType: { type: 'string', enum: ['parent', 'school_admin', 'security', 'system_admin'] },
-                        name: { type: 'string' },
-                        email: { type: 'string', format: 'email' },
-                        phone: { type: 'string' },
-                        password: { type: 'string', minLength: 8 },
-                        schoolId: { type: 'string' },
-                        linkedStudents: { type: 'array', items: { type: 'string' } },
-                    },
-                },
-                LoginRequest: {
-                    type: 'object',
-                    required: ['identifier', 'password'],
-                    properties: {
-                        identifier: { type: 'string', description: 'email or phone' },
-                        password: { type: 'string' },
-                    },
-                },
-                UpdateUserRequest: {
-                    type: 'object',
-                    properties: {
-                        userType: { type: 'string', enum: ['parent', 'school_admin', 'security', 'system_admin'] },
-                        name: { type: 'string' },
-                        email: { type: 'string', format: 'email' },
-                        phone: { type: 'string' },
-                        schoolId: { type: 'string', nullable: true },
-                        linkedStudents: { type: 'array', items: { type: 'string' } },
-                    },
-                },
-                BulkDeleteRequest: {
-                    type: 'object',
-                    required: ['ids'],
-                    properties: { ids: { type: 'array', items: { type: 'string' } } },
-                },
-                PagedUsersResponse: {
-                    type: 'object',
-                    properties: {
-                        success: { type: 'boolean' },
-                        page: { type: 'integer' },
-                        limit: { type: 'integer' },
-                        total: { type: 'integer' },
-                        items: { type: 'array', items: { $ref: '#/components/schemas/User' } },
-                    },
-                },
-            },
-        },
-        paths: {
-            '/api/auth/register': {
-                post: {
-                    tags: ['Auth'],
-                    summary: 'Register a new user',
-                    requestBody: {
-                        required: true,
-                        content: { 'application/json': { schema: { $ref: '#/components/schemas/RegisterRequest' } } },
-                    },
-                    responses: {
-                        201: { description: 'Created' },
-                        400: { description: 'Validation error' },
-                    },
-                },
-            },
-            '/api/auth/login': {
-                post: {
-                    tags: ['Auth'],
-                    summary: 'Login with email or phone and password',
-                    requestBody: {
-                        required: true,
-                        content: { 'application/json': { schema: { $ref: '#/components/schemas/LoginRequest' } } },
-                    },
-                    responses: {
-                        200: { description: 'OK' },
-                        401: { description: 'Invalid credentials' },
-                        429: { description: 'Too many attempts' },
-                    },
-                },
-            },
-            '/api/auth/me': {
-                get: {
-                    tags: ['Auth'],
-                    summary: 'Get current user details',
-                    security: [{ bearerAuth: [] }],
-                    responses: { 200: { description: 'OK' }, 401: { description: 'Unauthorized' } },
-                },
-            },
-            '/api/users': {
-                get: {
-                    tags: ['Users'],
-                    summary: 'List users (RBAC: system_admin, school_admin)',
-                    security: [{ bearerAuth: [] }],
-                    parameters: [
-                        { in: 'query', name: 'page', schema: { type: 'integer', minimum: 1 } },
-                        { in: 'query', name: 'limit', schema: { type: 'integer', minimum: 1, maximum: 100 } },
-                        { in: 'query', name: 'userType', schema: { type: 'string', enum: ['parent', 'school_admin', 'security', 'system_admin'] } },
-                    ],
-                    responses: {
-                        200: { description: 'OK' },
-                        401: { description: 'Unauthorized' },
-                        403: { description: 'Forbidden' },
-                    },
-                },
-            },
-            '/api/users/{id}': {
-                get: {
-                    tags: ['Users'],
-                    summary: 'Get user by id (RBAC: system_admin, school_admin)',
-                    security: [{ bearerAuth: [] }],
-                    parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
-                    responses: {
-                        200: { description: 'OK' },
-                        401: { description: 'Unauthorized' },
-                        403: { description: 'Forbidden' },
-                        404: { description: 'Not Found' },
-                    },
-                },
-                put: {
-                    tags: ['Users'],
-                    summary: 'Update user (RBAC: system_admin, school_admin)',
-                    security: [{ bearerAuth: [] }],
-                    parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
-                    requestBody: {
-                        required: true,
-                        content: { 'application/json': { schema: { $ref: '#/components/schemas/UpdateUserRequest' } } },
-                    },
-                    responses: {
-                        200: { description: 'OK' },
-                        400: { description: 'Validation error' },
-                        401: { description: 'Unauthorized' },
-                        403: { description: 'Forbidden' },
-                        404: { description: 'Not Found' },
-                    },
-                },
-                delete: {
-                    tags: ['Users'],
-                    summary: 'Delete user (RBAC: system_admin)',
-                    security: [{ bearerAuth: [] }],
-                    parameters: [{ in: 'path', name: 'id', required: true, schema: { type: 'string' } }],
-                    responses: {
-                        200: { description: 'Deleted' },
-                        401: { description: 'Unauthorized' },
-                        403: { description: 'Forbidden' },
-                        404: { description: 'Not Found' },
-                    },
-                },
-            },
-            '/api/users/bulk-delete': {
-                post: {
-                    tags: ['Users'],
-                    summary: 'Bulk delete users (RBAC: system_admin)',
-                    security: [{ bearerAuth: [] }],
-                    requestBody: {
-                        required: true,
-                        content: { 'application/json': { schema: { $ref: '#/components/schemas/BulkDeleteRequest' } } },
-                    },
-                    responses: {
-                        200: { description: 'OK' },
-                        401: { description: 'Unauthorized' },
-                        403: { description: 'Forbidden' },
-                    },
-                },
-            },
-        },
+PagedUsersResponse: {
+    type: 'object',
+        properties: {
+        success: { type: 'boolean' },
+        page: { type: 'integer' },
+        limit: { type: 'integer' },
+        total: { type: 'integer' },
+        items: { type: 'array', items: { $ref: '#/components/schemas/User' } },
     },
-    // If you use JSDoc comments in your route files, list the glob(s) here, e.g.:
-    // apis: ['./routes/*.js', './controllers/*.js'],
-    apis: [],
-};
-
-const swaggerSpec = swaggerJSDoc(options);
-
-export default swaggerSpec;
-// If using CommonJS: module.exports = swaggerSpec;
+},
+VisitingDay: {
+    type: 'object',
+        properties: {
+        _id: { type: 'string' },
+        date: { type: 'string', format: 'date-time' },
+        description: { type: 'string' },
+    },
+},
+VisitingDayCreateRequest: {
+    type: 'object',
+        required: ['date'],
+            properties: {
+        date: { type: 'string', format: 'date-time' },
+        description: { type: 'string', maxLength: 200 },
+    },
+},
+VisitingDayUpdateRequest: {
+    type: 'object',
+        properties: {
+        date: { type: 'string', format: 'date-time' },
+        description: { type: 'string', maxLength: 200 },
+    },
+},
+Visit: {
+    type: 'object',
+        properties: {
+        _id: { type: 'string' },
+        visitId: { type: 'string' },
+        schoolId: { type: 'string' },
+        parentId: { type: 'string' },
+        studentId: { type: 'string' },
+        status: { type: 'string', enum: ['pending_payment', 'confirmed', 'rejected', 'checked_in', 'cancelled'] },
+        visitDate: { type: 'string', format: 'date-time' },
+        approvalNotes: { type: 'string' },
+        reason: { type: 'string' },
+        createdAt: { type: 'string', format: 'date-time' },
+    },
+},
+ApproveVisitRequest: {
+    type: 'object',
+        properties: { notes: { type: 'string', maxLength: 500 } },
+},
+RejectVisitRequest: {
+    type: 'object',
+        required: ['reason'],
+            properties: { reason: { type: 'string', minLength: 3, maxLength: 500 } },
+},
+SettingsUpdateRequest: {
+    type: 'object',
+        properties: {
+        name: { type: 'string' },
+        apiUrl: { type: 'string', format: 'uri' },
+        apiKey: { type: 'string' },
+        studentDataMethod: { type: 'string', enum: ['api', 'csv'] },
+    },
+},
+AddSecurityUserRequest: {
+    type: 'object',
+        required: ['name', 'email', 'phone', 'password'],
+            properties: {
+        name: { type: 'string' },
+        email: { type: 'string', format: 'email' },
+        phone: { type: 'string' },
+        password: { type: 'string', minLength: 8 },
+    },
+},
+EditSchoolUserRequest: {
+    type: 'object',
+        properties: {
+        name: { type: 'string' },
+        email: { type: 'string', format: 'email' },
+        phone: { type: 'string' },
+    },
+},
+ChangePasswordRequest: {
+    type: 'object',
+        required: ['oldPassword', 'newPassword'],
+            properties: {
+        oldPassword: { type: 'string' },
+        newPassword: { type: 'string', minLength: 8 },
+    },
+},
