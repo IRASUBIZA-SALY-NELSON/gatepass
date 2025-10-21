@@ -9,7 +9,7 @@ import swaggerUi from 'swagger-ui-express';
 import authRoutes from './routes/authRoutes.js';
 import usersRoutes from './routes/usersRoutes.js';
 import { notFound, errorHandler } from './middlewares/errorHandler.js';
-import { swaggerSpec } from './docs/swagger.js';
+import swaggerSpec from './docs/swagger.js';
 
 // Load env from config/.env
 const __filename = fileURLToPath(import.meta.url);
