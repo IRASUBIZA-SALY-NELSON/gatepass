@@ -8,6 +8,7 @@ import swaggerUi from 'swagger-ui-express';
 
 import authRoutes from './routes/authRoutes.js';
 import usersRoutes from './routes/usersRoutes.js';
+import schoolRoutes from './routes/schoolRoutes.js';
 import { notFound, errorHandler } from './middlewares/errorHandler.js';
 import swaggerSpec from './docs/swagger.js';
 
@@ -45,6 +46,7 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, { explorer: f
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes);
+app.use('/api/schools', schoolRoutes);
 
 // 404 and error handler
 app.use(notFound);
