@@ -77,3 +77,68 @@ export const bulkDeleteValidation = validate([
     body('ids').isArray({ min: 1 }).withMessage('ids must be a non-empty array'),
     body('ids.*').isMongoId().withMessage('each id must be a valid ObjectId'),
 ]);
+
+// Parent validations
+export const getVisitingDaysValidation = validate([
+    param('schoolId').isMongoId().withMessage('Invalid school ID'),
+]);
+
+export const requestVisitValidation = validate([
+    body('schoolId').isMongoId().withMessage('Invalid school ID'),
+    body('studentId').isString().trim().notEmpty().withMessage('Student ID is required'),
+    body('visitDate').isISO8601().withMessage('Valid visit date is required'),
+    body('numVisitors').optional().isInt({ min: 1, max: 5 }).withMessage('Number of visitors must be between 1 and 5'),
+    body('reason').optional().isString().isLength({ max: 500 }).withMessage('Reason must be less than 500 characters'),
+    body('visitorNames').optional().isArray().withMessage('Visitor names must be an array'),
+    body('visitorPhones').optional().isArray().withMessage('Visitor phones must be an array'),
+]);
+
+export const getVisitsValidation = validate([
+    query('page').optional().isInt({ min: 1 }).withMessage('page must be integer >= 1'),
+    query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('limit must be between 1 and 100'),
+    query('status').optional().isIn(['pending_payment', 'confirmed', 'rejected', 'checked_in', 'cancelled']).withMessage('Invalid status'),
+    query('from').optional().isISO8601().withMessage('Invalid from date'),
+    query('to').optional().isISO8601().withMessage('Invalid to date'),
+]);
+
+export const cancelVisitValidation = validate([
+    param('visitId').isString().trim().notEmpty().withMessage('Visit ID is required'),
+    body('reason').optional().isString().isLength({ max: 500 }).withMessage('Reason must be less than 500 characters'),
+]);
+
+export const updateProfileValidation = validate([
+    body('name').optional().isString().trim().notEmpty().withMessage('Name must be non-empty string'),
+    body('phone').optional().isString().trim().notEmpty().withMessage('Phone must be non-empty string'),
+    body('address').optional().isString().trim().withMessage('Address must be a string'),
+    body('preferences').optional().isObject().withMessage('Preferences must be an object'),
+]);
+
+// Payment validations
+export const initializePaymentValidation = validate([
+    param('visitId').isString().trim().notEmpty().withMessage('Visit ID is required'),
+    body('paymentMethod').isIn(['momo', 'stripe', 'flutterwave']).withMessage('Invalid payment method'),
+    body('phoneNumber').optional().isString().trim().withMessage('Phone number must be a string'),
+]);
+
+export const confirmPaymentValidation = validate([
+    body('externalPaymentId').isString().trim().notEmpty().withMessage('External payment ID is required'),
+    body('status').isIn(['completed', 'failed']).withMessage('Invalid payment status'),
+    body('transactionId').optional().isString().trim().withMessage('Transaction ID must be a string'),
+    body('amount').optional().isNumeric().withMessage('Amount must be a number'),
+]);
+
+export const refundValidation = validate([
+    param('paymentId').isMongoId().withMessage('Invalid payment ID'),
+    body('reason').optional().isString().isLength({ max: 500 }).withMessage('Refund reason must be less than 500 characters'),
+]);
+
+// Gate/Security validations
+export const checkInValidation = validate([
+    param('visitId').isString().trim().notEmpty().withMessage('Visit ID is required'),
+    body('notes').optional().isString().isLength({ max: 500 }).withMessage('Notes must be less than 500 characters'),
+]);
+
+export const searchValidation = validate([
+    query('q').isString().isLength({ min: 2 }).withMessage('Search query must be at least 2 characters'),
+    query('date').optional().isISO8601().withMessage('Invalid date format'),
+]);
